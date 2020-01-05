@@ -1,15 +1,30 @@
 from flask import Flask, render_template, request, redirect
 import datetime
 import csv
+from azure.storage.blob import BlobClient
 
 app = Flask(__name__)
 
+def getAzureBlob():  
+    blob = BlobClient.from_connection_string(conn_str="DefaultEndpointsProtocol=https;AccountName=nikhilstorage;AccountKey=kfJbTJbHj5DmTy9g9dP3FicAKET8UzHtx67vI9SM2l9KXm1tUP1HTSkq0mwpu1MfifQYuYi+rThxZ5fCGgo9DQ==;EndpointSuffix=core.windows.net", container_name="contactdata", blob_name="database.txt")
+    with open("./database.txt", "wb") as my_blob:
+        blob_data = blob.download_blob()
+        blob_data.readinto(my_blob)
+    
+def uploadAzureBlob():
+    blob = BlobClient.from_connection_string(conn_str="DefaultEndpointsProtocol=https;AccountName=nikhilstorage;AccountKey=kfJbTJbHj5DmTy9g9dP3FicAKET8UzHtx67vI9SM2l9KXm1tUP1HTSkq0mwpu1MfifQYuYi+rThxZ5fCGgo9DQ==;EndpointSuffix=core.windows.net", container_name="contactdata", blob_name="database.txt")
+    with open("./database.txt", "rb") as data:
+        blob.delete_blob()
+        blob.upload_blob(data)
+
 @app.route('/')
 def hello_world():
+    getAzureBlob()
     return render_template('index.html')
 
 @app.route('/<string:page_name>')
 def html_page(page_name):
+    getAzureBlob()
     return render_template(page_name)   
     
 @app.route('/<name>')
@@ -30,9 +45,5 @@ def submit_form():
     data = request.form.to_dict()
     write_to_file(data)
     write_to_csv(data)
+    uploadAzureBlob()
     return redirect('thankyou.html')    
-
-
-
-#app.add_url_rule('/favicon.ico',
-   #              redirect_to=url_for('static', filename='favicon.ico'))
